@@ -9,15 +9,20 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"path/filepath"
 	"time"
 )
 
+var (
+	port  = flag.Int("port", 0, "Server port")
+	debug = flag.Bool("debug", false, "debugging")
+)
+
 func main() {
-	_ = os.Mkdir("video", os.ModePerm)
-	port := flag.Int("port", 0, "Server port")
 	flag.Parse()
+	_ = os.Mkdir("video", os.ModePerm)
 	l, e := net.Listen("tcp", fmt.Sprintf("localhost:%v", *port))
 	if e != nil {
 		panic(e)
@@ -58,6 +63,10 @@ func upload(w http.ResponseWriter, r *http.Request) {
 }
 
 func serve(w http.ResponseWriter, r *http.Request) {
+	if *debug {
+		dump(r)
+	}
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	path := filepath.Join("video", r.URL.Path)
 	http.ServeFile(w, r, path)
 }
@@ -78,4 +87,11 @@ func nextId() string {
 	data := make([]byte, 8)
 	binary.LittleEndian.PutUint64(data, uint64(time.Now().UnixNano()))
 	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(data)
+}
+
+func dump(r *http.Request) {
+	data, e := httputil.DumpRequest(r, true)
+	if e == nil {
+		log.Println(string(data))
+	}
 }
