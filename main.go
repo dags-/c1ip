@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"flag"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net"
@@ -12,26 +13,43 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
+)
+
+var (
+	addr = "http://localhost:8088"
+	page = template.Must(template.ParseFiles("html/template.html"))
 )
 
 func main() {
 	_ = os.Mkdir("temp", os.ModePerm)
 	_ = os.Mkdir("video", os.ModePerm)
-	port := flag.Int("port", 0, "Server port")
+	port := flag.Int("port", 8088, "Server port")
 	flag.Parse()
 	l, e := net.Listen("tcp", fmt.Sprintf("localhost:%v", *port))
 	if e != nil {
 		panic(e)
 	}
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir("video")))
+	mux.HandleFunc("/", serve)
 	mux.Handle("/upload/", http.StripPrefix("/upload/", http.FileServer(http.Dir("html"))))
 	mux.HandleFunc("/upload/file", upload)
 	log.Println("http://" + l.Addr().String() + "/upload")
 	e = http.Serve(l, mux)
 	if e != nil {
 		panic(e)
+	}
+}
+
+func serve(w http.ResponseWriter, r *http.Request) {
+	if strings.LastIndexAny(r.URL.Path, "./") > 0 {
+		http.ServeFile(w, r, filepath.Join("video", r.URL.Path))
+	} else {
+		e := page.Execute(w, addr+r.URL.Path)
+		if e != nil {
+			http.Error(w, e.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -63,7 +81,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	logErr(convert(src, dest))
 	logErr(os.Remove(src))
 
-	http.Redirect(w, r, "/"+name+".mp4", 302)
+	http.Redirect(w, r, "/"+name, 302)
 }
 
 func convert(src, dest string) error {
