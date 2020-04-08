@@ -16,7 +16,7 @@ import (
 
 func main() {
 	_ = os.Mkdir("video", os.ModePerm)
-	port := flag.Int("port", 8080, "Server port")
+	port := flag.Int("port", 0, "Server port")
 	flag.Parse()
 	l, e := net.Listen("tcp", fmt.Sprintf("localhost:%v", *port))
 	if e != nil {
