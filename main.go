@@ -18,15 +18,15 @@ import (
 )
 
 var (
-	addr = "http://localhost:8088"
+	port = flag.Int("port", 8088, "Server port")
+	addr = flag.String("url", "", "Website url")
 	page = template.Must(template.ParseFiles("html/template.html"))
 )
 
 func main() {
+	flag.Parse()
 	_ = os.Mkdir("temp", os.ModePerm)
 	_ = os.Mkdir("video", os.ModePerm)
-	port := flag.Int("port", 8088, "Server port")
-	flag.Parse()
 	l, e := net.Listen("tcp", fmt.Sprintf("localhost:%v", *port))
 	if e != nil {
 		panic(e)
@@ -46,7 +46,7 @@ func serve(w http.ResponseWriter, r *http.Request) {
 	if strings.LastIndexAny(r.URL.Path, "./") > 0 {
 		http.ServeFile(w, r, filepath.Join("video", r.URL.Path))
 	} else {
-		e := page.Execute(w, addr+r.URL.Path)
+		e := page.Execute(w, *addr+r.URL.Path)
 		if e != nil {
 			http.Error(w, e.Error(), http.StatusInternalServerError)
 		}
