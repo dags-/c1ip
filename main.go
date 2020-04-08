@@ -44,7 +44,11 @@ func main() {
 
 func serve(w http.ResponseWriter, r *http.Request) {
 	if strings.LastIndexAny(r.URL.Path, "./") > 0 {
-		http.ServeFile(w, r, filepath.Join("video", r.URL.Path))
+		if r.URL.Path == "/favicon.ico" {
+			http.ServeFile(w, r, filepath.Join("html", r.URL.Path))
+		} else {
+			http.ServeFile(w, r, filepath.Join("video", r.URL.Path))
+		}
 	} else {
 		e := page.Execute(w, *addr+r.URL.Path)
 		if e != nil {
@@ -78,13 +82,12 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	_, _ = io.Copy(out, in)
 	doClose(out)
 
-	logErr(convert(src, dest))
-	logErr(os.Remove(src))
+	go convert(src, dest)
 
 	http.Redirect(w, r, "/"+name, 302)
 }
 
-func convert(src, dest string) error {
+func convert(src, dest string) {
 	c := exec.Command(
 		"ffmpeg",
 		"-i", src,
@@ -94,12 +97,8 @@ func convert(src, dest string) error {
 		"-preset", "fast",
 		dest,
 	)
-	er, _ := c.StderrPipe()
-	go func() {
-		defer doClose(er)
-		_, _ = io.Copy(os.Stdout, er)
-	}()
-	return c.Run()
+	logErr(c.Run())
+	logErr(os.Remove(src))
 }
 
 func doClose(c io.Closer) {
@@ -116,6 +115,6 @@ func logErr(e error) {
 
 func nextId() string {
 	data := make([]byte, 4)
-	binary.LittleEndian.PutUint32(data, uint32(time.Now().Unix()))
+	binary.LittleEndian.PutUint32(data, uint32(time.Now().Nanosecond()))
 	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(data)
 }
