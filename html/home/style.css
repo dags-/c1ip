@@ -1,0 +1,31 @@
+body {
+    color: #333;
+    width: 90%;
+    margin: auto;
+    font-family: sans-serif;
+}
+.pad {
+    padding: 2em 1.5em;
+}
+.row {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    text-decoration: none;
+    align-items: center;
+    transition: transform .1s;
+    color: #333;
+}
+.row:nth-child(odd) {
+    background-color: #fafafa;
+}
+.row:hover {
+    transform: scale(1.01);
+}
+.left {
+    width: 100%;
+}
+.right {
+    width: 15em;
+    text-align: right;
+}

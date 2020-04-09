@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>c1ip.me</title>
+    <link rel="stylesheet" href="/home/style.css">
+    <link rel="shortcut  icon" type="image/x-icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="pad left">
+        <h2>C1ips</h2>
+    </div>
+    {{range .}}
+        <a class="pad row" href="/{{name .Name}}">
+            <div class="left">
+                {{name .Name}}
+            </div>
+            <div class="right">
+                {{date .ModTime}}
+            </div>
+        </a>
+    {{end}}
+</body>
+</html>

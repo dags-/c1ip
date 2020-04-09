@@ -1,0 +1,13 @@
+body {
+    display: flex;
+    height: 100vh;
+    margin: 0;
+    align-items: center;
+}
+
+video {
+    display: block;
+    width: 90%;
+    max-width: 1280px;
+    margin: auto;
+}
