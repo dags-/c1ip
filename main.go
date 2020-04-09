@@ -97,7 +97,6 @@ func upload(w http.ResponseWriter, r *http.Request) {
 
 		name := nextId()
 		src := filepath.Join("temp", name)
-		dest := filepath.Join("video", name+".mp4")
 		out, e := os.Create(src)
 		if e != nil {
 			http.Error(w, e.Error(), http.StatusNotFound)
@@ -106,14 +105,16 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		_, _ = io.Copy(out, in)
 		doClose(out)
 
-		go convert(src, dest)
+		temp := filepath.Join("temp", name+".mp4")
+		dest := filepath.Join("video", name+".mp4")
+		go convert(src, temp, dest)
 
 		http.Redirect(w, r, "/"+name, 302)
 		return
 	}
 }
 
-func convert(src, dest string) {
+func convert(src, temp, dest string) {
 	c := exec.Command(
 		"ffmpeg",
 		"-i", src,
@@ -121,10 +122,12 @@ func convert(src, dest string) {
 		"-b:v", "4M", "-maxrate", "4M", "-bufsize", "1M",
 		"-vf", "scale=-1:720:flags=lanczos",
 		"-preset", "fast",
-		dest,
+		temp,
 	)
 	logErr(c.Run())
+	logErr(os.Rename(temp, dest))
 	logErr(os.Remove(src))
+	logErr(os.Remove(temp))
 }
 
 func listFiles() ([]os.FileInfo, error) {
