@@ -133,9 +133,13 @@ func convert(src, temp, dest string) {
 			}()
 		}
 	}
-	logErr("Convert", c.Run())
+	if logErr("Convert", c.Run()) {
+		logErr("Remove temp", os.Remove(temp))
+	} else {
+		logErr("Rename temp -> dest", os.Rename(temp, dest))
+	}
+
 	logErr("Remove src", os.Remove(src))
-	logErr("Rename temp -> dest", os.Rename(temp, dest))
 }
 
 func listFiles() ([]os.FileInfo, error) {
@@ -155,10 +159,12 @@ func doClose(name string, c io.Closer) {
 	}
 }
 
-func logErr(name string, e error) {
+func logErr(name string, e error) bool {
 	if e != nil {
 		log.Println(name+":", e)
+		return true
 	}
+	return false
 }
 
 func nextId() string {
