@@ -20,10 +20,11 @@ import (
 )
 
 var (
-	port = flag.Int("port", 8088, "Server port")
-	addr = flag.String("url", "", "Website url")
-	page = template.Must(template.ParseFiles("html/video/template.html"))
-	home = template.Must(template.New("template.html").Funcs(template.FuncMap{
+	port  = flag.Int("port", 8088, "Server port")
+	addr  = flag.String("url", "", "Website url")
+	debug = flag.Bool("debug", false, "Debugging")
+	page  = template.Must(template.ParseFiles("html/video/template.html"))
+	home  = template.Must(template.New("template.html").Funcs(template.FuncMap{
 		"name": func(s string) string {
 			return strings.TrimSuffix(s, ".mp4")
 		},
@@ -82,7 +83,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		e := r.ParseMultipartForm(200 << 20)
+		e := r.ParseMultipartForm(500 << 20)
 		if e != nil {
 			http.Error(w, e.Error(), http.StatusNotFound)
 			return
@@ -93,7 +94,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, e.Error(), http.StatusNotFound)
 			return
 		}
-		defer doClose(in)
+		defer doClose("Close input", in)
 
 		name := nextId()
 		src := filepath.Join("temp", name)
@@ -103,13 +104,13 @@ func upload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		_, _ = io.Copy(out, in)
-		doClose(out)
+		doClose("Close output", out)
 
 		temp := filepath.Join("temp", name+".mp4")
 		dest := filepath.Join("video", name+".mp4")
 		go convert(src, temp, dest)
 
-		http.Redirect(w, r, "/"+name, 302)
+		http.Redirect(w, r, "/", 302)
 		return
 	}
 }
@@ -124,10 +125,17 @@ func convert(src, temp, dest string) {
 		"-preset", "fast",
 		temp,
 	)
-	logErr(c.Run())
-	logErr(os.Rename(temp, dest))
-	logErr(os.Remove(src))
-	logErr(os.Remove(temp))
+	if *debug {
+		err, e := c.StderrPipe()
+		if e == nil {
+			go func() {
+				_, _ = io.Copy(os.Stdout, err)
+			}()
+		}
+	}
+	logErr("Convert", c.Run())
+	logErr("Remove src", os.Remove(src))
+	logErr("Rename temp -> dest", os.Rename(temp, dest))
 }
 
 func listFiles() ([]os.FileInfo, error) {
@@ -141,15 +149,15 @@ func listFiles() ([]os.FileInfo, error) {
 	return files, nil
 }
 
-func doClose(c io.Closer) {
+func doClose(name string, c io.Closer) {
 	if c != nil {
-		logErr(c.Close())
+		logErr(name, c.Close())
 	}
 }
 
-func logErr(e error) {
+func logErr(name string, e error) {
 	if e != nil {
-		log.Println(e)
+		log.Println(name+":", e)
 	}
 }
 
