@@ -120,8 +120,8 @@ func convert(src, temp, dest string) {
 		"ffmpeg",
 		"-i", src,
 		"-c:v", "libx264",
-		"-b:v", "4M", "-maxrate", "4M", "-bufsize", "1M",
-		"-vf", "scale=-1:720:flags=lanczos",
+		"-b:v", "4M", "-maxrate", "4M", "-bufsize", "2M",
+		"-vf", "scale=1280:720:flags=lanczos",
 		"-preset", "fast",
 		temp,
 	)
