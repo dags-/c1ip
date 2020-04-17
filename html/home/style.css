@@ -29,3 +29,17 @@ body {
     width: 15em;
     text-align: right;
 }
+form {
+    padding: 1em 0;
+    display: flex;
+}
+input {
+    font-size: 1em;
+    flex-grow: 1;
+}
+input[type="file"] {
+    width: 100%;
+    padding: 1.15em;
+    flex-grow: 2;
+    border: 1px solid #dadada;
+}

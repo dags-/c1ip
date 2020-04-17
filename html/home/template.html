@@ -8,9 +8,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <div class="pad left">
+    <div class="pad">
         <h2>C1ips</h2>
     </div>
+    <form enctype="multipart/form-data" action="/upload" method="post">
+        <input type="file" name="upload"/>
+        <input type="submit" value="upload" />
+    </form>
     {{range .}}
         <a class="pad row" href="/{{name .Name}}">
             <div class="left">
