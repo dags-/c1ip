@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	"c1ip/app"
+	"github.com/dags-/c1ip/app"
 )
 
 func main() {

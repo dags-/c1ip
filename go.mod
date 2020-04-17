@@ -1,3 +1,3 @@
-module c1ip
+module github.com/dags-/c1ip
 
-go 1.13ó
+go 1.13
