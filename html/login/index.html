@@ -3,11 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10em 0;
+        }
+        form {
+            margin: auto;
+            text-align: center;
+        }
+        input {
+            display: block;
+            font-size: 1em;
+            margin: 0.1em auto;
+        }
+        .logo {
+            display: block;
+            width: 5em;
+            height: 5em;
+            margin: auto;
+            background: url("../favicon.ico") no-repeat center;
+        }
+    </style>
 </head>
 <body>
 <form enctype="multipart/form-data" action="/login" method="post">
-    <input type="text" name="user">
-    <input type="password" name="pass">
+    <div class="logo"></div>
+    <input type="text" name="user" placeholder="Username">
+    <input type="password" name="pass" placeholder="Password">
     <input type="text" name="target" value="/" style="display:none">
     <input type="submit" value="Login">
 </form>
