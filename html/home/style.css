@@ -11,23 +11,25 @@ body {
     display: flex;
     width: 100%;
     box-sizing: border-box;
-    text-decoration: none;
     align-items: center;
-    transition: transform .1s;
     color: #333;
 }
 .row:nth-child(odd) {
     background-color: #fafafa;
 }
-.row:hover {
-    transform: scale(1.01);
-}
 .left {
     width: 100%;
+    padding: 2.5em 1em;
+    text-decoration: none;
+    color: #333;
 }
 .right {
     width: 15em;
-    text-align: right;
+    text-align: center;
+}
+.delete {
+    padding: 1em;
+    cursor: pointer;
 }
 form {
     padding: 1em 0;

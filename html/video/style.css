@@ -9,5 +9,6 @@ video {
     display: block;
     width: 90%;
     max-width: 1280px;
+    max-height: 720px;
     margin: auto;
 }

@@ -16,17 +16,25 @@
         <input type="submit" value="upload" />
     </form>
     {{range .}}
-        <a class="pad row" href="/{{name .Name}}">
-            <div class="left">
+        <div class="row">
+            <a class="left" href="/{{name .Name}}">
                 {{name .Name}}
-            </div>
-            <video width="120px">
+            </a>
+            <video width="120px" height="64px">
                 <source src="/{{name .Name}}.mp4" type="video/mp4">
             </video>
             <div class="right">
                 {{date .ModTime}}
             </div>
-        </a>
+            <div class="delete" onclick="del('{{name .Name}}')">✖</div>
+        </div>
     {{end}}
 </body>
+<script>
+    function del(name) {
+        fetch("/" + name, {"method": "delete"})
+            .then(() => window.location.reload())
+            .catch(console.error);
+    }
+</script>
 </html>

@@ -32,7 +32,7 @@ func (a *Auth) login(w http.ResponseWriter, r *http.Request) {
 		}
 
 		http.SetCookie(w, &http.Cookie{
-			Secure:  true,
+			Secure:  a.user != "",
 			Path:    "/",
 			Name:    "auth",
 			Value:   "true",
@@ -51,6 +51,14 @@ func (a *Auth) check(w http.ResponseWriter, r *http.Request) bool {
 		http.Redirect(w, r, "/login", 302)
 		return false
 	}
+}
+
+func (a *Auth) test(r *http.Request) bool {
+	token, e := r.Cookie("auth")
+	if e == nil && token.Value == "true" {
+		return true
+	}
+	return false
 }
 
 func (a *Auth) wrap(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {

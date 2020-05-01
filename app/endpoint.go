@@ -23,28 +23,49 @@ var (
 	}).ParseFiles("html/home/template.html"))
 )
 
+type Action struct {
+	Type string `json:"type"`
+	Data string `json:"data"`
+}
+
 func (a *App) serve(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/" || r.URL.Path == "/index.html" {
-		if a.auth.check(w, r) {
-			a.list(w, r)
+	if r.Method == http.MethodGet {
+		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
+			if a.auth.check(w, r) {
+				a.list(w, r)
+				return
+			}
 			return
 		}
-		return
-	}
 
-	if strings.LastIndexAny(r.URL.Path, "./") > 0 {
-		if strings.HasSuffix(r.URL.Path, ".mp4") {
-			http.ServeFile(w, r, filepath.Join("video", r.URL.Path))
-		} else {
-			http.ServeFile(w, r, filepath.Join("html", r.URL.Path))
+		if strings.LastIndexAny(r.URL.Path, "./") > 0 {
+			if strings.HasSuffix(r.URL.Path, ".mp4") {
+				http.ServeFile(w, r, filepath.Join("video", r.URL.Path))
+			} else {
+				http.ServeFile(w, r, filepath.Join("html", r.URL.Path))
+			}
+			return
 		}
-		return
+
+		e := page.Execute(w, a.addr+r.URL.Path)
+
+		if e != nil {
+			http.Error(w, e.Error(), http.StatusInternalServerError)
+		}
 	}
 
-	e := page.Execute(w, a.addr+r.URL.Path)
-
-	if e != nil {
-		http.Error(w, e.Error(), http.StatusInternalServerError)
+	if r.Method == http.MethodDelete {
+		if a.auth.test(r) {
+			path := filepath.Join("video", r.URL.Path+".mp4")
+			if _, e := os.Stat(path); e == nil {
+				e := os.Remove(path)
+				if e != nil {
+					http.Error(w, e.Error(), http.StatusInternalServerError)
+				}
+			}
+		} else {
+			http.Error(w, "Not authenticated", http.StatusUnauthorized)
+		}
 	}
 }
 

@@ -8,13 +8,16 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
 
 func nextId() string {
 	data := make([]byte, 4)
 	binary.LittleEndian.PutUint32(data, uint32(time.Now().Nanosecond()))
-	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(data)
+	token := base64.StdEncoding.WithPadding(base64.NoPadding).EncodeToString(data)
+	token = strings.Replace(token, "-", "", -1)
+	return token
 }
 
 func listFiles() ([]os.FileInfo, error) {
