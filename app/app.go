@@ -9,6 +9,7 @@ import (
 type Config struct {
 	User  string
 	Pass  string
+	Salt  string
 	Addr  string
 	Debug bool
 }
@@ -21,10 +22,7 @@ type App struct {
 
 func New(c *Config) *App {
 	return &App{
-		auth: &Auth{
-			user: c.User,
-			pass: c.Pass,
-		},
+		auth:  auth(c.User, c.Pass, c.Salt),
 		addr:  c.Addr,
 		debug: c.Debug,
 	}

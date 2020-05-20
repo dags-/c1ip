@@ -12,7 +12,7 @@ func convert(src, temp, dest string, logging bool) {
 		"-i", src,
 		"-c:v", "libx264",
 		"-b:v", "4M", "-maxrate", "4M", "-bufsize", "2M",
-		"-vf", "scale=1280:720:flags=lanczos",
+		"-vf", "scale=1920:1080:flags=lanczos",
 		"-preset", "fast",
 		temp,
 	)

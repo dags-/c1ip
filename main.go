@@ -14,6 +14,7 @@ func main() {
 	addr := flag.String("addr", "", "Server address")
 	user := flag.String("user", "", "User")
 	pass := flag.String("pass", "", "Pass")
+	salt := flag.String("salt", "", "Pass")
 	flag.Parse()
 
 	_ = os.Mkdir("temp", os.ModePerm)
@@ -27,6 +28,7 @@ func main() {
 	a := app.New(&app.Config{
 		User:  *user,
 		Pass:  *pass,
+		Salt:  *salt,
 		Addr:  *addr,
 		Debug: false,
 	})
