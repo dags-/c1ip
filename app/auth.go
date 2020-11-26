@@ -3,21 +3,28 @@ package app
 import (
 	"crypto/sha512"
 	"encoding/base64"
+	"github.com/google/uuid"
+	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
 type Auth struct {
-	secure bool
-	salt   string
-	token  string
+	lock     *sync.RWMutex
+	secure   bool
+	salt     string
+	token    string
+	sessions map[string]time.Time
 }
 
-func auth(user, pass, salt string) *Auth {
+func auth(user, pass, salt string, debug bool) *Auth {
 	return &Auth{
-		secure: user != "" && pass != "",
-		salt:   salt,
-		token:  hash(user, pass, salt),
+		lock:     &sync.RWMutex{},
+		secure:   !debug && user != "" && pass != "",
+		salt:     salt,
+		token:    hash(user, pass, salt),
+		sessions: map[string]time.Time{},
 	}
 }
 
@@ -52,12 +59,16 @@ func (a *Auth) login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		sessionToken := nextToken()
+		timestamp := time.Now().Add(time.Hour * 24 * 30)
+		a.storeToken(sessionToken, timestamp)
+
 		http.SetCookie(w, &http.Cookie{
 			Secure:  a.secure,
 			Path:    "/",
-			Name:    "auth",
-			Value:   token,
-			Expires: time.Now().Add(time.Hour * 24 * 30),
+			Name:    "session",
+			Value:   sessionToken,
+			Expires: timestamp,
 		})
 
 		http.Redirect(w, r, target, 302)
@@ -65,8 +76,8 @@ func (a *Auth) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Auth) check(w http.ResponseWriter, r *http.Request) bool {
-	token, e := r.Cookie("auth")
-	if e == nil && token.Value == a.token {
+	token, e := r.Cookie("session")
+	if e == nil && a.validateToken(token.Value) {
 		return true
 	} else {
 		http.Redirect(w, r, "/login", 302)
@@ -76,10 +87,72 @@ func (a *Auth) check(w http.ResponseWriter, r *http.Request) bool {
 
 func (a *Auth) test(r *http.Request) bool {
 	token, e := r.Cookie("auth")
-	if e == nil && token.Value == a.token {
+	if e == nil && a.validateToken(token.Value) {
 		return true
 	}
 	return false
+}
+
+func (a *Auth) storeToken(token string, timestamp time.Time) {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+	a.sessions[token] = timestamp
+}
+
+func (a *Auth) validateToken(token string) bool {
+	a.lock.RLock()
+	timestamp, ok := a.sessions[token]
+	a.lock.RUnlock()
+
+	if !ok {
+		return false
+	}
+
+	if !time.Now().Before(timestamp) {
+		a.lock.Lock()
+		delete(a.sessions, token)
+		a.lock.Unlock()
+		return false
+	}
+
+	return true
+}
+
+func (a *Auth) manageSessions() {
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
+
+	const empty = ""
+	var size = 0
+	var queue []string
+
+	for range ticker.C {
+		a.lock.Lock()
+		queue, size = collectExpired(a.sessions, queue)
+		for i := 0; i < size; i++ {
+			delete(a.sessions, queue[i])
+			queue[i] = empty
+		}
+		a.lock.Unlock()
+		log.Printf("Purged %v sessions\n", size)
+	}
+}
+
+func collectExpired(sessions map[string]time.Time, queue []string) ([]string, int) {
+	i := 0
+	now := time.Now()
+	length := len(queue)
+	for k, v := range sessions {
+		if now.After(v) {
+			if i < length {
+				queue[i] = k
+			} else {
+				queue = append(queue, k)
+			}
+			i++
+		}
+	}
+	return queue, i
 }
 
 func (a *Auth) wrap(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
@@ -88,4 +161,8 @@ func (a *Auth) wrap(handler func(http.ResponseWriter, *http.Request)) func(http.
 			handler(w, r)
 		}
 	}
+}
+
+func nextToken() string {
+	return uuid.New().String()
 }
