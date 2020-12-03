@@ -55,13 +55,15 @@ func (a *App) serve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodDelete {
-		if a.auth.test(r) {
-			path := filepath.Join("video", r.URL.Path+".mp4")
+		if a.auth.check(w, r) {
+			path := filepath.Join("video", r.URL.Path[1:]+".mp4")
 			if _, e := os.Stat(path); e == nil {
 				e := os.Remove(path)
 				if e != nil {
 					http.Error(w, e.Error(), http.StatusInternalServerError)
 				}
+			} else {
+				http.Error(w, e.Error(), http.StatusNotFound)
 			}
 		} else {
 			http.Error(w, "Not authenticated", http.StatusUnauthorized)
